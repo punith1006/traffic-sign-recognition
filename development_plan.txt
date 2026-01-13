@@ -1,0 +1,1792 @@
+# SIGNWISE AI - 24-HOUR DEVELOPMENT PLAN
+
+**Generated**: January 13, 2026 - 10:40 AM IST  
+**Delivery Deadline**: January 14, 2026 - 10:40 AM IST  
+**Total Available Hours**: 24  
+**Team Composition**: 3 Specialized AI Agents (Frontend, Backend, AI/Integration)  
+**Architecture Pattern**: Microservices (Frontend App, Backend API, AI Service)
+
+---
+
+## SECTION 1: EXECUTIVE SUMMARY
+
+### 1.1 Project Scope
+
+SignWise AI is an AI-powered road safety learning platform that transforms traffic sign memorization into an engaging, gamified experience. We are building a full-stack web application with **instant image recognition** via Google Gemini Vision API, **adaptive quiz system** with XP/levels, **progress tracking dashboard**, **sign library browser**, and **AI chat tutor**. The target users are students preparing for driving tests and new drivers seeking confidence. The key differentiator is combining real-world AI recognition with gamified social learning—something no existing app offers.
+
+### 1.2 Critical Success Path
+
+**The single most important user flow that defines demo success:**
+
+> **First-Time User Experience (FTUE) → Image Upload → AI Sign Recognition → First Quiz Completion**
+
+This 60-second journey must demonstrate:
+1. User lands on app → sees "Upload Sign Image" prominently
+2. Uploads a traffic sign photo → gets instant AI recognition (< 3 sec)
+3. Sees sign name, category, explanation with beautiful animation
+4. Starts first 5-question quiz → gets XP + level-up animation
+5. Progress dashboard shows streak started
+
+**If this flow works flawlessly with polished UI, the demo succeeds.**
+
+### 1.3 Development Philosophy
+
+**Vertical Slice First, Polish Second**
+
+We will build the complete critical path (Frontend → Backend → AI) as the first priority before expanding horizontally to other features. This ensures:
+- Early integration catches mismatches between services
+- Demo-ready deliverable exists at every checkpoint
+- Risk of integration failures is minimized
+
+**API-First Development**
+
+Backend endpoints will be defined with mock responses before frontend implementation, ensuring parallel development without blocking.
+
+### 1.4 Phase-Gate Checkpoints
+
+| Checkpoint | Hour | Deliverable | Validation |
+|------------|------|-------------|------------|
+| **C1: Foundation Ready** | Hour 4 | Projects initialized, DB schema, design system | All services start without errors |
+| **C2: Recognition Working** | Hour 10 | Image upload → AI recognition end-to-end | Upload image, see correct sign result |
+| **C3: Quiz Functional** | Hour 16 | Quiz generation → submission → XP award | Complete quiz, see XP/level update |
+| **C4: Dashboard Live** | Hour 20 | Progress tracking, sign library browsing | View stats, browse signs, see badges |
+| **C5: Demo Ready** | Hour 24 | Full FTUE flow, AI chat, polish | Complete FTUE in 60 seconds, impressive UI |
+
+### 1.5 Highest Risk Factors
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| **Gemini API Rate Limits** | Critical | Medium | Implement caching for identical images, use mock responses for development |
+| **Frontend-Backend API Mismatch** | High | High | Define API contracts in Phase 1, use shared Zod schemas |
+| **Complex State Management** | Medium | Medium | Start with minimal Zustand store, expand incrementally |
+| **Animation Performance** | Medium | Low | Use CSS animations for micro-interactions, Framer Motion only for key moments |
+| **Database Query Performance** | Medium | Low | Add indexes early, use Prisma's include carefully |
+
+### 1.6 Scope Management Strategy
+
+**Protected Scope (Non-Negotiable):**
+- Image upload + AI recognition
+- Basic quiz (10 questions, XP award)
+- Progress dashboard (XP, level, streak)
+- Sign library (browse/search)
+- Dark mode UI with design system
+
+**Flexible Scope (Simplify if needed):**
+- AI Chat Tutor → Can be reduced to simple Q&A without conversation history
+- Adaptive quiz algorithm → Can use random selection instead of spaced repetition
+- Social challenges → Defer entirely if behind schedule
+
+**Minimum Viable Demo:**
+If critically behind at Hour 18:
+1. Image upload + recognition ✓
+2. Single pre-made quiz ✓
+3. Hard-coded progress display ✓
+4. Static sign library ✓
+
+---
+
+## SECTION 2: PHASE-BASED DEVELOPMENT PLAN
+
+---
+
+### PHASE 1: FOUNDATION & INFRASTRUCTURE
+
+**Timeframe**: Hour 0 to Hour 4  
+**Duration**: 4 hours  
+**Phase Objective**: Set up all project scaffolding, database schema, design system, and establish cross-service communication patterns.  
+**Success Checkpoint**: All three services (Frontend, Backend, AI) start without errors; database migrations run; design tokens render correctly.
+
+---
+
+#### Phase 1 Strategic Overview
+
+**Why This Phase Matters**:
+Foundation quality determines development velocity. Proper TypeScript configuration, consistent design tokens, and working database connections prevent hours of debugging later.
+
+**Key Deliverables**:
+- Next.js 14 project with Tailwind CSS configured to brand specs
+- Express.js backend with Prisma ORM and PostgreSQL connection
+- AI service module integrated into backend
+- Complete database schema migrated
+- Seed data for 40+ traffic signs
+
+**Parallel Workstreams**:
+- **Frontend Agent**: Next.js setup, Tailwind config, design system components
+- **Backend Agent**: Express setup, Prisma schema, migrations, seed data
+- **AI Agent**: Gemini integration module, mock service for offline testing
+
+**Integration Points**:
+- Backend provides `/api/health` endpoint for frontend to verify connectivity
+- Database seed includes signs that AI service can recognize
+- Shared TypeScript types defined for cross-service consistency
+
+---
+
+#### Phase 1 Task Breakdown
+
+---
+
+**TASK F1-001: Initialize Next.js Frontend Project**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 30 minutes  
+**Dependencies**: None
+
+---
+
+**Context from PRD**:
+- Section 5.2: Next.js 14+ with App Router, TypeScript, Tailwind CSS 3.4+
+- Section 4.2: Design system with specific colors, typography, spacing
+
+**Task Objective**:
+Create the foundational Next.js project with proper TypeScript configuration, folder structure matching PRD specifications, and initial route setup.
+
+**Detailed Requirements**:
+- Use `create-next-app` with TypeScript template
+- App Router structure (not Pages Router)
+- Folder structure matching PRD Section 5.2
+- ESLint and Prettier configured
+- Environment variables setup (.env.local template)
+
+**Technical Specifications**:
+```
+/signwise-frontend
+├── /src
+│   ├── /app
+│   │   ├── /(auth)/login/page.tsx
+│   │   ├── /(auth)/signup/page.tsx
+│   │   ├── /(dashboard)/page.tsx
+│   │   ├── /(dashboard)/library/page.tsx
+│   │   ├── /(dashboard)/quiz/[id]/page.tsx
+│   │   ├── /(dashboard)/profile/page.tsx
+│   │   ├── layout.tsx
+│   │   └── globals.css
+│   ├── /components/ui/
+│   ├── /lib/
+│   └── /styles/
+├── tailwind.config.ts
+├── next.config.js
+└── .env.local.example
+```
+
+**Acceptance Criteria**:
+- [ ] `npm run dev` starts server on port 3000 without errors
+- [ ] TypeScript strict mode enabled
+- [ ] App Router structure matches PRD specification
+- [ ] All placeholder pages render with "Coming Soon" text
+- [ ] Environment variable template includes API_URL, WS_URL
+
+**Testing Strategy**:
+- Run `npm run dev` and verify server starts
+- Visit each route in browser to confirm rendering
+- Run `npm run lint` with zero warnings
+
+**Implementation Guidance**:
+Use `npx create-next-app@latest --typescript --tailwind --eslint --app`. Initialize with `./` to create in current directory. Don't add src directory preference—we'll configure manually.
+
+**Handoff Requirements**:
+- Document port number (3000)
+- Share .env.local.example for backend URL configuration
+
+---
+
+**TASK F1-002: Configure Tailwind Design System**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 45 minutes  
+**Dependencies**: F1-001
+
+---
+
+**Context from PRD**:
+- Section 4.2: Complete color palette (Electric Blue #00D9FF, Deep Navy #0A1128, etc.)
+- Typography: Poppins (headlines), Inter (body), JetBrains Mono (data)
+- Spacing: 8px base unit scale
+
+**Task Objective**:
+Configure Tailwind CSS with all brand colors, typography, and spacing tokens from the PRD design system.
+
+**Detailed Requirements**:
+- All primary colors (Electric Blue, Deep Navy, Vibrant Teal)
+- Secondary colors (Sunset Orange, Neon Purple)
+- Neutral scale for dark mode
+- Semantic colors (success, warning, error, info)
+- Google Fonts integration (Poppins, Inter, JetBrains Mono)
+- Custom spacing scale
+
+**Technical Specifications**:
+
+File: `tailwind.config.ts`
+```typescript
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"],
+  theme: {
+    extend: {
+      colors: {
+        electricBlue: "#00D9FF",
+        deepNavy: "#0A1128",
+        vibrantTeal: "#00F5D4",
+        sunsetOrange: "#FF6B35",
+        neonPurple: "#B565D8",
+        surface: "#1A2238",
+        surfaceElevated: "#283048",
+        border: "#3D4C63",
+        textSecondary: "#B4BCC8",
+        textTertiary: "#8891A0",
+        success: "#00F5A0",
+        warning: "#FFC43D",
+        error: "#FF6B93",
+      },
+      fontFamily: {
+        poppins: ["var(--font-poppins)", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"],
+        mono: ["var(--font-jetbrains)", "monospace"],
+      },
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+      },
+      borderRadius: {
+        '2xl': '16px',
+        '3xl': '24px',
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;
+```
+
+File: `src/app/layout.tsx` - Font imports using next/font
+
+**Acceptance Criteria**:
+- [ ] All brand colors accessible via Tailwind classes (e.g., `bg-electricBlue`)
+- [ ] Typography classes work (`font-poppins`, `font-inter`, `font-mono`)
+- [ ] Dark mode background uses Deep Navy (#0A1128) by default
+- [ ] Sample component renders with correct colors
+- [ ] No FOUT (Flash of Unstyled Text) on page load
+
+**Testing Strategy**:
+- Create test page with all color swatches
+- Verify fonts load correctly in Network tab
+- Check that dark background appears on body
+
+**Implementation Guidance**:
+Use `next/font` for Google Fonts optimization. Import Poppins (600, 700, 800 weights), Inter (400, 500, 600), JetBrains Mono (500). Apply CSS variables to `:root`.
+
+---
+
+**TASK F1-003: Create Base UI Components**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-002
+
+---
+
+**Context from PRD**:
+- Section 4.2 Component Library: Buttons (Primary, Secondary, Ghost), Cards, Inputs, Progress components
+- All components must follow brand styling with gradients, glows, and hover states
+
+**Task Objective**:
+Build reusable UI component library following PRD specifications with proper TypeScript typing and accessibility.
+
+**Detailed Requirements**:
+- Button component (Primary, Secondary, Ghost variants)
+- Card component (default, elevated, interactive)
+- Input component with validation states
+- ProgressBar (linear)
+- ProgressRing (circular)
+- Badge component
+- cn() utility for class merging
+
+**Technical Specifications**:
+
+File: `src/lib/utils/cn.ts`
+```typescript
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+File: `src/components/ui/Button.tsx`
+```typescript
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  isLoading?: boolean;
+}
+```
+
+- Primary button: Gradient background, white text, glow on hover, scale on active
+- Secondary button: Transparent bg, electric blue border, electric blue text
+- Ghost button: Transparent bg, subtle hover state
+
+**Acceptance Criteria**:
+- [ ] All three button variants render correctly
+- [ ] Buttons have proper focus rings (2px electric blue outline)
+- [ ] Loading state shows spinner
+- [ ] Cards have correct shadows and border radius
+- [ ] Inputs show validation states (error border, success checkmark)
+- [ ] Components are fully typed with TypeScript
+- [ ] All interactive elements have `disabled` states
+
+**Testing Strategy**:
+- Create `/test-ui` page displaying all components
+- Tab through components to verify keyboard focus
+- Test with screen reader (VoiceOver/NVDA)
+
+**Implementation Guidance**:
+Install `clsx` and `tailwind-merge` for className utility. Use CSS variables for reusable gradients. Add `transition-all duration-200` for smooth interactions.
+
+---
+
+**TASK B1-001: Initialize Express.js Backend Project**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 30 minutes  
+**Dependencies**: None
+
+---
+
+**Context from PRD**:
+- Section 5.3: Express.js 4.18+, TypeScript, Prisma ORM
+- Folder structure with controllers, services, routes, middleware
+
+**Task Objective**:
+Create the Express.js backend project with TypeScript, proper folder structure, and essential middleware configuration.
+
+**Detailed Requirements**:
+- TypeScript configuration with strict mode
+- Express app with CORS, body-parser, error handling
+- Folder structure matching PRD Section 5.3
+- Health check endpoint
+- Environment variables setup
+
+**Technical Specifications**:
+```
+/signwise-backend
+├── /src
+│   ├── /controllers/
+│   ├── /services/
+│   ├── /routes/
+│   ├── /middleware/
+│   │   ├── errorHandler.ts
+│   │   └── cors.ts
+│   ├── /config/
+│   │   └── env.ts
+│   ├── /types/
+│   ├── app.ts
+│   └── server.ts
+├── /prisma/
+│   └── schema.prisma
+├── tsconfig.json
+├── .env.example
+└── package.json
+```
+
+**Acceptance Criteria**:
+- [ ] `npm run dev` starts server on port 8000
+- [ ] GET `/health` returns `{ status: "ok", timestamp: "..." }`
+- [ ] CORS configured to allow frontend origin
+- [ ] TypeScript compiles without errors
+- [ ] Error handler catches and formats all errors
+
+**Testing Strategy**:
+- Run `npm run dev` and verify startup
+- `curl http://localhost:8000/health` returns 200
+- Test CORS with fetch from frontend
+
+**Implementation Guidance**:
+Use `tsx` or `ts-node-dev` for development hot reload. Install `cors`, `helmet`, `express-rate-limit` for security. Use `dotenv` for environment variables.
+
+---
+
+**TASK B1-002: Configure Prisma and Database Schema**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: B1-001
+
+---
+
+**Context from PRD**:
+- Section 5.3 Database Schema: Complete Prisma schema with User, Sign, Quiz, Recognition, Badge models
+- Indexes on frequently queried columns
+- Enums for categories, roles, statuses
+
+**Task Objective**:
+Set up Prisma ORM with complete database schema matching PRD specifications, run migrations, and configure database connection.
+
+**Detailed Requirements**:
+- All models from PRD: User, Sign, QuizSession, QuizQuestion, QuizAnswer, Recognition, UserSignStat, Badge, UserBadge, ChatConversation, ChatMessage
+- All enums: Role, SignCategory, QuizType, MessageRole
+- Composite indexes for common queries
+- UUIDs for all IDs
+
+**Technical Specifications**:
+Use the exact schema from PRD Section 5.3, lines 1166-1366.
+
+Database: PostgreSQL (or SQLite for local development)
+
+**Acceptance Criteria**:
+- [ ] `npx prisma migrate dev` runs without errors
+- [ ] All tables created in database
+- [ ] Prisma Client generates successfully
+- [ ] Can query empty tables without errors
+- [ ] Indexes exist on userId, signId, createdAt columns
+
+**Testing Strategy**:
+- Run migration and verify in database client (pgAdmin, TablePlus)
+- Generate client and import in test file
+- Execute simple query (findMany) on each model
+
+**Implementation Guidance**:
+For local development, use SQLite (`file:./dev.db`) for simplicity. Switch to PostgreSQL URL for production. Run `npx prisma generate` after schema changes.
+
+---
+
+**TASK B1-003: Create Sign Seed Data**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 45 minutes  
+**Dependencies**: B1-002
+
+---
+
+**Context from PRD**:
+- 40+ traffic sign categories needed for recognition
+- Categories: WARNING, REGULATORY, GUIDE, CONSTRUCTION, RECREATION
+- US region focus for MVP
+
+**Task Objective**:
+Create comprehensive seed data for traffic signs with accurate names, descriptions, rules, and placeholder image URLs.
+
+**Detailed Requirements**:
+- Minimum 40 signs across all categories
+- Each sign: name, description, category, region, imageUrl, rules
+- At least 5 quiz questions per popular sign
+- 5 badges for initial gamification
+
+File: `prisma/seed.ts`
+
+**Signs to include**:
+- REGULATORY: Stop, Yield, Speed Limit (25, 35, 45, 55, 65), Do Not Enter, One Way, No U-Turn, No Parking
+- WARNING: Deer Crossing, Pedestrian Crossing, Curve Ahead, Slippery When Wet, Railroad Crossing, School Zone, Merge
+- GUIDE: Interstate, Exit, Hospital, Airport, Food, Gas, Lodging
+- CONSTRUCTION: Road Work Ahead, Flagger Ahead, Detour
+
+**Acceptance Criteria**:
+- [ ] `npx prisma db seed` creates 40+ signs
+- [ ] Each category has minimum 5 signs
+- [ ] Quiz questions seeded for at least 20 signs
+- [ ] 5 badges created (First Steps, Quiz Master, Sign Spotter, etc.)
+- [ ] No duplicate sign names
+
+**Testing Strategy**:
+- Run seed and verify counts via Prisma Studio
+- Query signs by category, verify correct distribution
+
+**Implementation Guidance**:
+Create `prisma/seed.ts` with structured data. Add `"prisma": { "seed": "tsx prisma/seed.ts" }` to package.json.
+
+---
+
+**TASK A1-001: Set Up Gemini AI Integration Module**
+
+**Assigned To**: AI/ML Engineer  
+**Service**: AI Service (within Backend)  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: B1-001
+
+---
+
+**Context from PRD**:
+- Section 5.4: Google Gemini 1.5 Flash for sign recognition
+- System prompt strategy for structured JSON output
+- Integrated into main backend (no separate service for MVP)
+
+**Task Objective**:
+Create AI service module with Gemini API integration for traffic sign recognition, including proper error handling and mock mode for offline development.
+
+**Detailed Requirements**:
+- Gemini client configuration with API key
+- Sign recognition function with image buffer input
+- Structured system prompt for JSON output
+- Mock service for development without API calls
+- Response parsing and validation
+
+**Technical Specifications**:
+
+File: `src/ai/gemini.service.ts`
+```typescript
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+export async function recognizeSign(imageBuffer: Buffer, mimeType: string) {
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  
+  const imagePart = {
+    inlineData: {
+      data: imageBuffer.toString("base64"),
+      mimeType,
+    },
+  };
+
+  const result = await model.generateContent([
+    SYSTEM_PROMPT_SIGN_RECOGNITION,
+    imagePart,
+  ]);
+
+  return parseAIResponse(result.response.text());
+}
+```
+
+File: `src/ai/prompts.ts`
+```typescript
+export const SYSTEM_PROMPT_SIGN_RECOGNITION = `
+You are a Traffic Safety Expert AI. Analyze the traffic sign in this image.
+
+OUTPUT FORMAT (JSON only, no markdown):
+{
+  "detected": boolean,
+  "sign_name": "string",
+  "category": "Warning|Regulatory|Guide|Construction",
+  "explanation": "concise string (<50 words)",
+  "driving_action": "what should the driver do?",
+  "confidence": number (0-1)
+}
+
+If no traffic sign is detected, set detected: false and explain why.
+`;
+```
+
+File: `src/ai/mock.service.ts` - Returns hardcoded responses for testing
+
+**Acceptance Criteria**:
+- [ ] recognizeSign() returns parsed JSON for valid image
+- [ ] Mock mode works when MOCK_AI=true
+- [ ] Handles API errors gracefully (timeout, rate limit)
+- [ ] Response includes all required fields
+- [ ] Confidence score is between 0 and 1
+
+**Testing Strategy**:
+- Unit test with mock mode enabled
+- Manual test with real API key and sample stop sign image
+- Test error handling with invalid image
+
+**Implementation Guidance**:
+Install `@google/generative-ai` package. Use environment variable `GEMINI_API_KEY`. Implement 10-second timeout. Add retry logic with exponential backoff (3 attempts).
+
+---
+
+#### Phase 1 Integration & Validation
+
+**Integration Sequence**:
+1. Start backend → verify health endpoint
+2. Run database migrations → verify tables created
+3. Run seed data → verify signs in database
+4. Start frontend → verify design system renders
+5. Test API connectivity → frontend fetches from backend health endpoint
+
+**Phase Validation Checklist**:
+- [ ] Frontend: `npm run dev` starts on port 3000
+- [ ] Frontend: All color tokens render correctly
+- [ ] Frontend: Base components display properly
+- [ ] Backend: `npm run dev` starts on port 8000
+- [ ] Backend: GET /health returns 200
+- [ ] Backend: Prisma Client connects to database
+- [ ] Backend: 40+ signs exist in database
+- [ ] AI: Gemini module returns mock response
+
+**Phase Exit Criteria**:
+- All three services running simultaneously without errors
+- Database seeded with demo data
+- Design system verified with visual test page
+
+---
+
+### PHASE 2: IMAGE RECOGNITION FLOW
+
+**Timeframe**: Hour 4 to Hour 10  
+**Duration**: 6 hours  
+**Phase Objective**: Build complete image upload → AI recognition → result display flow across all services.  
+**Success Checkpoint**: User can upload traffic sign image and see correct identification with beautiful UI.
+
+---
+
+#### Phase 2 Strategic Overview
+
+**Why This Phase Matters**:
+Image recognition is the "aha moment" that differentiates SignWise AI from competitors. This flow must work flawlessly and feel magical.
+
+**Key Deliverables**:
+- Image upload component with drag-and-drop
+- Backend recognition endpoint with file handling
+- AI recognition with Gemini API
+- Results display with animations
+- Recognition history saved to database
+
+**Parallel Workstreams**:
+- **Frontend**: Upload UI, preview, results display, animations
+- **Backend**: File upload endpoint, S3 integration, recognition logic
+- **AI**: Fine-tune prompts, handle edge cases
+
+---
+
+#### Phase 2 Task Breakdown
+
+---
+
+**TASK F2-001: Build Image Upload Component**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-003
+
+---
+
+**Context from PRD**:
+- Section 3.1 Feature 1: Image upload interface accessible in <1 second
+- Section 5.2: react-dropzone for drag-and-drop
+- Accepts JPEG/PNG, max 5MB
+
+**Task Objective**:
+Create a polished image upload component with drag-and-drop support, image preview, file validation, and loading states.
+
+**Detailed Requirements**:
+- Drag-and-drop zone (desktop)
+- Gallery picker button (mobile-friendly)
+- File type validation (JPEG/PNG only)
+- File size validation (max 5MB)
+- Image preview with optional crop
+- "Analyze Sign" button to submit
+- Loading state with AI brain animation
+
+**Technical Specifications**:
+
+File: `src/components/features/upload/ImageUploader.tsx`
+```typescript
+interface ImageUploaderProps {
+  onUpload: (file: File) => Promise<void>;
+  isAnalyzing: boolean;
+}
+```
+
+States:
+1. **Empty**: Dashed border drop zone, "Upload Sign Image" CTA
+2. **Preview**: Image displayed, "Analyze Sign" button visible
+3. **Analyzing**: Pulsing animation, "AI analyzing..." text
+4. **Error**: Red border, error message, "Try Again" button
+
+**Acceptance Criteria**:
+- [ ] Drag-and-drop works on desktop browsers
+- [ ] Click to select works on all devices
+- [ ] Invalid file type shows specific error message
+- [ ] Files > 5MB rejected with size limit message
+- [ ] Preview displays selected image clearly
+- [ ] Loading animation plays during analysis
+- [ ] Component is fully responsive (mobile-friendly)
+
+**Testing Strategy**:
+- Test with JPEG, PNG, GIF (reject), PDF (reject)
+- Test with 2MB file (accept), 6MB file (reject)
+- Test on mobile viewport
+- Verify keyboard accessibility (tab to upload button)
+
+**Implementation Guidance**:
+Install `react-dropzone`. Use `useCallback` for file handler. Store selected file in local state until submit. Show file size in preview (e.g., "2.3 MB").
+
+---
+
+**TASK F2-002: Build Recognition Results Card**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-003, F2-001
+
+---
+
+**Context from PRD**:
+- Section 3.2 Journey 3: Results card with sign image, name, category badge, explanation
+- Section 4.3: Animated card reveal with Framer Motion
+
+**Task Objective**:
+Create the recognition results display component with beautiful animations and all sign information.
+
+**Detailed Requirements**:
+- Animated card slide-up (Framer Motion)
+- Sign image (enhanced/cropped)
+- Sign name in large text
+- Category badge (color-coded)
+- Explanation text
+- "Rules" expandable section
+- Action buttons: "Add to Practice", "See Similar", "Share"
+- +10 XP notification
+
+**Technical Specifications**:
+
+File: `src/components/features/upload/RecognitionResult.tsx`
+```typescript
+interface RecognitionResultProps {
+  sign: {
+    name: string;
+    category: string;
+    description: string;
+    imageUrl: string;
+    rules: string;
+  };
+  confidence: number;
+  xpEarned: number;
+  onClose: () => void;
+  onAddToPractice: () => void;
+}
+```
+
+Animation sequence:
+1. Card slides up from bottom (500ms, spring ease)
+2. Sign image scales in (300ms delay)
+3. Text fades in sequentially
+4. Confetti burst (if first recognition)
+
+**Acceptance Criteria**:
+- [ ] Card animates in smoothly from bottom
+- [ ] Sign name displays in Poppins Bold 24px
+- [ ] Category badge shows correct color (Warning = orange, Regulatory = blue, etc.)
+- [ ] Explanation is readable and concise
+- [ ] Confidence score displayed as percentage (if > 80%)
+- [ ] XP earning notification animates
+- [ ] Card can be closed with X button or backdrop click
+
+**Testing Strategy**:
+- Render with mock data for each category
+- Verify animation timing feels natural
+- Test on mobile viewport (card should be full-width)
+
+---
+
+**TASK B2-001: Create Recognition API Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 2 hours  
+**Dependencies**: B1-002, A1-001
+
+---
+
+**Context from PRD**:
+- Section 5.3 API: POST /api/ai/recognize-sign
+- Multipart form-data with image file
+- Returns sign data, confidence, XP earned
+
+**Task Objective**:
+Build the complete recognition endpoint handling file upload, AI integration, database storage, and response formatting.
+
+**Detailed Requirements**:
+- File upload with Multer middleware
+- File type and size validation
+- Call Gemini AI service for recognition
+- Match AI response to known signs in database
+- Save recognition record
+- Award XP to user (if authenticated)
+- Return structured response
+
+**Technical Specifications**:
+
+Route: `POST /api/ai/recognize-sign`
+
+File: `src/routes/ai.routes.ts`
+```typescript
+router.post('/recognize-sign', 
+  upload.single('image'),
+  validateRequest(recognitionSchema),
+  recognizeSignController
+);
+```
+
+File: `src/controllers/aiController.ts`
+```typescript
+export async function recognizeSignController(req, res) {
+  // 1. Validate file exists
+  // 2. Call AI service
+  // 3. Match to database sign (fuzzy match on name)
+  // 4. Save recognition record
+  // 5. Award XP (10 points for discovery)
+  // 6. Return response
+}
+```
+
+Response Format (from PRD):
+```json
+{
+  "recognition": {
+    "id": "uuid",
+    "sign": {
+      "id": "uuid",
+      "name": "Speed Limit 25",
+      "category": "REGULATORY",
+      "description": "Maximum speed 25 mph",
+      "imageUrl": "https://...",
+      "rules": "Do not exceed posted speed..."
+    },
+    "confidence": 0.97,
+    "uploadedImageUrl": "https://...",
+    "xpEarned": 10
+  }
+}
+```
+
+**Acceptance Criteria**:
+- [ ] Accepts multipart/form-data with image field
+- [ ] Rejects non-JPEG/PNG files with 400 error
+- [ ] Rejects files > 5MB with 413 error
+- [ ] Returns matched sign data when confidence > 80%
+- [ ] Returns "unrecognized" response when confidence < 80%
+- [ ] Saves recognition to database
+- [ ] Awards 10 XP to authenticated user
+- [ ] Rate limited to 10 requests per minute
+
+**Testing Strategy**:
+- Use Postman/curl with sample images
+- Test with traffic sign image (should succeed)
+- Test with non-sign image (should return unrecognized)
+- Test with oversized file
+- Test rate limiting
+
+**Implementation Guidance**:
+Use Multer with memory storage for now (production would use S3). Implement fuzzy matching on sign name using `include %LIKE%` or string similarity. Handle AI service timeout gracefully.
+
+---
+
+**TASK F2-003: Integrate Upload Flow with Backend**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: F2-001, F2-002, B2-001
+
+---
+
+**Context from PRD**:
+- Complete integration from file selection to result display
+- Use TanStack Query for data fetching
+
+**Task Objective**:
+Connect the image upload component to the backend API and display results using the results card.
+
+**Detailed Requirements**:
+- Create API client function for recognition endpoint
+- TanStack Query mutation for upload
+- Handle loading, success, and error states
+- Display results in RecognitionResult component
+- Update UI state flow
+
+**Technical Specifications**:
+
+File: `src/lib/api/ai.ts`
+```typescript
+export async function recognizeSign(file: File) {
+  const formData = new FormData();
+  formData.append("image", file);
+  
+  const response = await fetch(`${API_URL}/api/ai/recognize-sign`, {
+    method: "POST",
+    body: formData,
+  });
+  
+  return response.json();
+}
+```
+
+File: `src/app/(dashboard)/page.tsx`
+```typescript
+const mutation = useMutation({
+  mutationFn: recognizeSign,
+  onSuccess: (data) => setRecognitionResult(data.recognition),
+});
+```
+
+**Acceptance Criteria**:
+- [ ] Upload triggers API call
+- [ ] Loading state displays during API call
+- [ ] Success shows RecognitionResult card
+- [ ] Error shows friendly error message
+- [ ] Can retry after failure
+- [ ] Network errors handled gracefully
+
+**Testing Strategy**:
+- End-to-end test: upload real image, see real result
+- Test with backend mock mode
+- Test offline/network error handling
+
+---
+
+#### Phase 2 Integration & Validation
+
+**Integration Sequence**:
+1. Verify AI service returns mock/real response
+2. Test backend endpoint with Postman
+3. Connect frontend to backend
+4. Full flow test: upload → recognition → display
+
+**Phase Validation Checklist**:
+- [ ] Upload component renders on home page
+- [ ] Can select image via drag-drop and click
+- [ ] Invalid files are rejected with clear error
+- [ ] API call reaches backend
+- [ ] AI service returns recognition result
+- [ ] Result card displays with correct data
+- [ ] Animation feels polished and smooth
+- [ ] Recognition saved to database
+
+**Phase Exit Criteria**:
+- Complete upload → recognition flow works end-to-end
+- Result displays correctly for successful recognition
+- Error handling works for failed recognition
+- Demo can show "instant sign recognition" capability
+
+---
+
+### PHASE 3: QUIZ SYSTEM
+
+**Timeframe**: Hour 10 to Hour 16  
+**Duration**: 6 hours  
+**Phase Objective**: Build adaptive quiz system with question generation, answer submission, XP/level progression, and engaging UI.  
+**Success Checkpoint**: User can complete a 10-question quiz, earn XP, see level progress, and get feedback on answers.
+
+---
+
+#### Phase 3 Strategic Overview
+
+**Why This Phase Matters**:
+Quiz system drives retention through daily challenges and skill building. This is where users spend most of their time in the app.
+
+**Key Deliverables**:
+- Quiz generation endpoint (adaptive questions)
+- Question display with timer
+- Answer feedback with explanations
+- Results screen with XP animation
+- Level-up celebration
+
+**Parallel Workstreams**:
+- **Frontend**: Question cards, feedback animations, results screen
+- **Backend**: Quiz generation algorithm, submission handler, XP/level logic
+
+---
+
+#### Phase 3 Task Breakdown
+
+---
+
+**TASK B3-001: Build Quiz Generation Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 2 hours  
+**Dependencies**: B1-003
+
+---
+
+**Context from PRD**:
+- Section 5.3 API: GET /api/quiz/generate
+- Adaptive algorithm prioritizing weak areas
+- Mix of difficulty levels
+
+**Task Objective**:
+Create quiz generation endpoint that returns 10 adaptive questions based on user history (simplified version for MVP).
+
+**Detailed Requirements**:
+- Query quiz questions from database
+- Mix difficulties (3 easy, 4 medium, 3 hard)
+- Avoid recently seen questions (if user has history)
+- Create quiz session in database
+- Return formatted question list
+
+**Technical Specifications**:
+
+Route: `GET /api/quiz/generate?type=DAILY_CHALLENGE&count=10`
+
+Response (from PRD):
+```json
+{
+  "sessionId": "uuid",
+  "questions": [
+    {
+      "id": "uuid",
+      "signId": "uuid",
+      "signImageUrl": "https://...",
+      "questionText": "What does this sign mean?",
+      "options": ["Stop completely", "Yield", "Speed limit", "Pedestrian"],
+      "difficulty": 2
+    }
+  ],
+  "xpPotential": 50
+}
+```
+
+**MVP Simplification**: Use random selection instead of full spaced repetition algorithm.
+
+**Acceptance Criteria**:
+- [ ] Returns exactly requested number of questions
+- [ ] Questions have all required fields
+- [ ] Session created in database
+- [ ] Options are shuffled (correct answer not always first)
+- [ ] Mix of difficulties present
+- [ ] Works for unauthenticated users (guest mode)
+
+**Testing Strategy**:
+- Request multiple quizzes, verify question variety
+- Check session created in database
+- Verify options contain correct answer
+
+---
+
+**TASK B3-002: Build Quiz Submission Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 2 hours  
+**Dependencies**: B3-001
+
+---
+
+**Context from PRD**:
+- Section 5.3 API: POST /api/quiz/submit
+- Calculate score, award XP, check level-up
+- Return detailed feedback
+
+**Task Objective**:
+Create quiz submission endpoint that processes answers, updates user stats, awards XP, and returns comprehensive feedback.
+
+**Detailed Requirements**:
+- Validate session exists and not already submitted
+- Calculate correct answers count
+- Update UserSignStat for each question
+- Calculate and award XP (base + bonus for accuracy)
+- Check for level-up
+- Check for badge eligibility
+- Update streak (if daily challenge)
+- Return detailed results
+
+**Technical Specifications**:
+
+Route: `POST /api/quiz/submit`
+
+Request:
+```json
+{
+  "sessionId": "uuid",
+  "answers": [
+    { "questionId": "uuid", "selectedAnswer": 0, "timeSpent": 4500 }
+  ]
+}
+```
+
+Response (from PRD):
+```json
+{
+  "results": {
+    "correct": 8,
+    "total": 10,
+    "accuracy": 80.0,
+    "xpEarned": 40,
+    "newLevel": 5,
+    "leveledUp": false,
+    "weakAreas": ["WARNING", "CONSTRUCTION"]
+  },
+  "answerFeedback": [
+    {
+      "questionId": "uuid",
+      "isCorrect": true,
+      "correctAnswer": 0,
+      "explanation": "This is a stop sign..."
+    }
+  ],
+  "newBadges": []
+}
+```
+
+XP Calculation:
+- Base: 5 XP per correct answer
+- Bonus: +10 XP for 80%+, +25 XP for 100%
+- Speed bonus: +1 XP for answers under 5 seconds
+
+Level thresholds: 0, 100, 250, 500, 1000, 2000, 4000...
+
+**Acceptance Criteria**:
+- [ ] Calculates correct/incorrect accurately
+- [ ] Awards appropriate XP amount
+- [ ] Updates user XP in database
+- [ ] Detects and returns level-up
+- [ ] Returns explanation for each question
+- [ ] Identifies weak areas (categories with <70% accuracy)
+- [ ] Awards badges when criteria met
+- [ ] Updates streak for daily challenge
+
+**Testing Strategy**:
+- Submit quiz with known answers, verify XP calculation
+- Test level-up boundary
+- Test badge awarding
+- Test with unauthenticated user
+
+---
+
+**TASK F3-001: Build Quiz Question Card**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-003
+
+---
+
+**Context from PRD**:
+- Section 3.2 Journey 2: Question card with sign image, options, timer
+- Immediate visual feedback on answer selection
+
+**Task Objective**:
+Create interactive quiz question component with image display, answer options, feedback animations, and timer.
+
+**Detailed Requirements**:
+- Sign image prominently displayed
+- Question text
+- 4 answer options as interactive buttons
+- Optional timer (10 seconds)
+- Progress indicator (Question X of Y)
+- Immediate feedback on selection (correct = green glow, incorrect = red shake)
+- "Next" button after answer
+- Explanation card slides up after answer
+
+**Technical Specifications**:
+
+File: `src/components/features/quiz/QuestionCard.tsx`
+```typescript
+interface QuestionCardProps {
+  question: {
+    id: string;
+    signImageUrl: string;
+    questionText: string;
+    options: string[];
+    difficulty: number;
+  };
+  questionNumber: number;
+  totalQuestions: number;
+  onAnswer: (answerIndex: number, timeSpent: number) => void;
+  showTimer?: boolean;
+}
+```
+
+Animations:
+- Correct: Checkmark scales in, green glow pulse, haptic (if available)
+- Incorrect: Card shakes ±10px, red glow, X icon
+- Transition: Card slides out left, new card slides in from right
+
+**Acceptance Criteria**:
+- [ ] Sign image displays clearly
+- [ ] All 4 options are tappable
+- [ ] Timer counts down and auto-submits (if enabled)
+- [ ] Correct answer shows green feedback
+- [ ] Incorrect answer shows red shake animation
+- [ ] Explanation appears after answer
+- [ ] "Next" button advances to next question
+- [ ] Progress bar updates
+
+**Testing Strategy**:
+- Test with 10 mock questions
+- Verify animations are smooth (60fps)
+- Test timer auto-submit
+- Test keyboard interaction (1-4 for options)
+
+---
+
+**TASK F3-002: Build Quiz Results Screen**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-003, F3-001
+
+---
+
+**Context from PRD**:
+- Section 3.2 Journey 2: Results with XP animation, accuracy, weak areas
+- Section 4.3: Confetti on completion, level-up celebration
+
+**Task Objective**:
+Create celebratory results screen showing score, XP earned, level progress, and next actions.
+
+**Detailed Requirements**:
+- Score display (X/10 correct)
+- Accuracy percentage with color coding
+- XP earned with count-up animation
+- Level progress bar with animation
+- Level-up celebration (if applicable)
+- Weak areas identified
+- New badges earned (if any)
+- Action buttons: "Review Mistakes", "Try Again", "Go Home"
+
+**Technical Specifications**:
+
+File: `src/components/features/quiz/ResultsScreen.tsx`
+```typescript
+interface ResultsScreenProps {
+  results: {
+    correct: number;
+    total: number;
+    accuracy: number;
+    xpEarned: number;
+    newLevel: number;
+    leveledUp: boolean;
+    weakAreas: string[];
+  };
+  newBadges: Badge[];
+  onReview: () => void;
+  onRetry: () => void;
+  onHome: () => void;
+}
+```
+
+Animations:
+- Initial: Background celebration (confetti for 80%+)
+- Score: Number count-up from 0 to actual
+- XP: Count-up animation (+40 XP)
+- Level-up: Special full-screen animation with trophy
+
+**Acceptance Criteria**:
+- [ ] All result data displays correctly
+- [ ] XP count-up animation is satisfying
+- [ ] Accuracy color: <70% orange, 70-89% green, 90%+ gold
+- [ ] Level progress bar animates
+- [ ] Level-up triggers special celebration
+- [ ] Weak areas show category names
+- [ ] Badges animate in (if earned)
+- [ ] Navigation buttons work
+
+**Testing Strategy**:
+- Test with 100% accuracy result
+- Test with 50% accuracy result
+- Test level-up scenario
+- Test badge earning scenario
+
+---
+
+**TASK F3-003: Integrate Quiz Flow with Backend**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P0 (Blocking)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: F3-001, F3-002, B3-001, B3-002
+
+---
+
+**Task Objective**:
+Connect quiz components to backend APIs, manage quiz state, and handle the complete quiz flow.
+
+**Detailed Requirements**:
+- Fetch quiz questions on start
+- Track answers in local state
+- Submit answers on completion
+- Display results from API response
+- Handle errors gracefully
+
+**Technical Specifications**:
+
+File: `src/lib/stores/quizStore.ts` (Zustand)
+```typescript
+interface QuizState {
+  sessionId: string | null;
+  questions: Question[];
+  currentIndex: number;
+  answers: Answer[];
+  isLoading: boolean;
+  results: Results | null;
+  
+  startQuiz: (type: QuizType) => Promise<void>;
+  submitAnswer: (questionId: string, answer: number, time: number) => void;
+  finishQuiz: () => Promise<void>;
+  reset: () => void;
+}
+```
+
+**Acceptance Criteria**:
+- [ ] Quiz loads questions from API on start
+- [ ] Answers tracked locally during quiz
+- [ ] Submission sends all answers to API
+- [ ] Results screen shows API response data
+- [ ] Loading states displayed appropriately
+- [ ] Can start new quiz after completion
+
+**Testing Strategy**:
+- Complete full quiz flow end-to-end
+- Test with slow network
+- Test session timeout handling
+
+---
+
+#### Phase 3 Integration & Validation
+
+**Phase Validation Checklist**:
+- [ ] Quiz generates 10 questions successfully
+- [ ] Questions display with correct data
+- [ ] Answer selection provides feedback
+- [ ] Timer works (if enabled)
+- [ ] Explanations appear after answer
+- [ ] All answers submitted to backend
+- [ ] XP calculated and awarded correctly
+- [ ] Results screen displays accurately
+- [ ] Level-up animation triggers correctly
+- [ ] Can start subsequent quiz
+
+**Phase Exit Criteria**:
+- Complete quiz flow works end-to-end
+- XP and level updates persist
+- User engagement feels rewarding
+- Demo can show "adaptive learning quiz"
+
+---
+
+### PHASE 4: PROGRESS DASHBOARD & SIGN LIBRARY
+
+**Timeframe**: Hour 16 to Hour 20  
+**Duration**: 4 hours  
+**Phase Objective**: Build progress tracking dashboard with stats, badges, and browsable sign library.  
+**Success Checkpoint**: User sees XP, level, streak, badges, and can browse/search all signs.
+
+---
+
+#### Phase 4 Task Breakdown
+
+---
+
+**TASK B4-001: Build User Stats Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: B3-002
+
+---
+
+Route: `GET /api/users/{id}/stats`
+
+**Acceptance Criteria**:
+- [ ] Returns user profile (level, XP, streak)
+- [ ] Returns progress per category
+- [ ] Returns quiz stats (total, accuracy)
+- [ ] Returns earned badges
+- [ ] Calculates XP to next level
+
+---
+
+**TASK B4-002: Build Signs List/Search Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: B1-003
+
+---
+
+Route: `GET /api/signs?region=US&category=WARNING&search=deer&limit=20`
+
+**Acceptance Criteria**:
+- [ ] Returns paginated sign list
+- [ ] Filters by region and category
+- [ ] Fuzzy search on name/description
+- [ ] Returns total count for pagination
+- [ ] Results cached (1 hour)
+
+---
+
+**TASK F4-001: Build Progress Dashboard**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 2 hours  
+**Dependencies**: F1-003, B4-001
+
+---
+
+**Detailed Requirements**:
+- User profile header (name, avatar, level)
+- XP progress ring (circular)
+- Streak counter with flame animation
+- Category progress bars
+- Badge showcase grid
+- Quiz stats summary
+
+**Technical Specifications**:
+- Use ProgressRing component for XP
+- Animate numbers on mount
+- Lazy load badges
+
+**Acceptance Criteria**:
+- [ ] All stats display correctly
+- [ ] Progress ring animates on load
+- [ ] Badges show locked/unlocked states
+- [ ] Category bars show correct percentages
+- [ ] Responsive on all screen sizes
+
+---
+
+**TASK F4-002: Build Sign Library Page**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P1 (Critical)  
+**Estimated Duration**: 2 hours  
+**Dependencies**: F1-003, B4-002
+
+---
+
+**Detailed Requirements**:
+- Search bar with instant results
+- Category filter chips
+- Pinterest-style responsive grid
+- Sign cards with image, name, category
+- Click to expand details
+- Bookmark functionality
+
+**Acceptance Criteria**:
+- [ ] Search returns results as you type
+- [ ] Category chips filter results
+- [ ] Grid is responsive (2/3/4 columns)
+- [ ] Sign cards display correctly
+- [ ] Detail modal shows full sign info
+- [ ] Pagination or infinite scroll works
+
+---
+
+#### Phase 4 Integration & Validation
+
+**Phase Validation Checklist**:
+- [ ] Dashboard shows real user stats
+- [ ] XP updates reflect after quiz
+- [ ] Sign library loads all 40+ signs
+- [ ] Search finds expected signs
+- [ ] Category filter works correctly
+
+**Phase Exit Criteria**:
+- Dashboard displays accurate progress
+- Sign library is browsable and searchable
+- Visual polish matches design system
+
+---
+
+### PHASE 5: AI CHAT TUTOR
+
+**Timeframe**: Hour 20 to Hour 22  
+**Duration**: 2 hours  
+**Phase Objective**: Build conversational AI tutor for road sign questions.  
+**Success Checkpoint**: User can ask questions in natural language and get helpful, contextual answers.
+
+---
+
+#### Phase 5 Task Breakdown
+
+---
+
+**TASK B5-001: Build Chat API Endpoint**
+
+**Assigned To**: Backend Engineer  
+**Service**: Backend  
+**Priority**: P2 (Important)  
+**Estimated Duration**: 1 hour  
+**Dependencies**: A1-001
+
+---
+
+Route: `POST /api/chat/message`
+
+**Acceptance Criteria**:
+- [ ] Creates conversation if new
+- [ ] Stores messages in database
+- [ ] Calls Gemini API with context
+- [ ] Returns AI response with sign references
+- [ ] Maintains conversation history (last 10 messages)
+
+---
+
+**TASK F5-001: Build Chat Interface**
+
+**Assigned To**: Frontend Specialist  
+**Service**: Frontend  
+**Priority**: P2 (Important)  
+**Estimated Duration**: 1.5 hours  
+**Dependencies**: F1-003, B5-001
+
+---
+
+**Detailed Requirements**:
+- WhatsApp-style chat bubbles
+- AI mascot avatar
+- Typing indicator
+- Sign card embeds in responses
+- Fixed input bar at bottom
+- Suggested questions
+
+**Acceptance Criteria**:
+- [ ] Messages display correctly
+- [ ] Typing indicator shows while waiting
+- [ ] AI responses include sign images when relevant
+- [ ] Conversation scrolls to latest
+- [ ] Can start new conversation
+
+---
+
+#### Phase 5 Integration & Validation
+
+**Phase Exit Criteria**:
+- Can ask questions and receive helpful answers
+- Conversation feels natural
+- Sign references display correctly
+
+---
+
+### PHASE 6: POLISH & DEMO PREPARATION
+
+**Timeframe**: Hour 22 to Hour 24  
+**Duration**: 2 hours  
+**Phase Objective**: Final polish, bug fixes, demo preparation, and documentation.  
+**Success Checkpoint**: Demo-ready application with impressive FTUE flow.
+
+---
+
+#### Phase 6 Task Breakdown
+
+---
+
+**TASK P6-001: FTUE Flow Optimization**
+
+**Estimated Duration**: 30 minutes
+
+- Verify 60-second first-time experience
+- Add splash screen animation
+- Ensure smooth onboarding
+- Test complete journey multiple times
+
+---
+
+**TASK P6-002: Visual Polish**
+
+**Estimated Duration**: 45 minutes
+
+- Fix any alignment/spacing issues
+- Verify all animations are smooth
+- Check color consistency
+- Test on multiple screen sizes
+
+---
+
+**TASK P6-003: Bug Fixes**
+
+**Estimated Duration**: 45 minutes
+
+- Fix any P0/P1 bugs discovered
+- Handle edge cases
+- Improve error messages
+
+---
+
+**TASK P6-004: Demo Data Preparation**
+
+**Estimated Duration**: 15 minutes
+
+- Seed impressive demo user
+- Prepare sample images for recognition demo
+- Create demo script
+
+---
+
+---
+
+## SECTION 3: PARALLEL WORKSTREAM COORDINATION
+
+### 3.1 Team Structure & Responsibilities
+
+**Frontend Specialist**:
+- **Primary Responsibility**: All UI components, pages, animations
+- **Task Assignments**: F1-*, F2-*, F3-*, F4-*, F5-*
+- **Decision Authority**: UI/UX implementations, animation timing, component API design
+- **Collaboration Requirements**: Sync with Backend on API contracts before implementation
+- **Deliverable Ownership**: All `/src/components`, `/src/app` directories
+
+**Backend Engineer**:
+- **Primary Responsibility**: API endpoints, database operations, business logic
+- **Task Assignments**: B1-*, B2-*, B3-*, B4-*, B5-*
+- **Decision Authority**: Database schema, API response formats, validation rules
+- **Collaboration Requirements**: Provide API documentation to Frontend, integrate AI module
+- **Deliverable Ownership**: All `/src/controllers`, `/src/services`, `/src/routes`, `/prisma`
+
+**AI/Integration Engineer**:
+- **Primary Responsibility**: Gemini integration, prompt engineering, integration testing
+- **Task Assignments**: A1-*, integration testing, P6-*
+- **Decision Authority**: AI prompts, confidence thresholds, response parsing
+- **Collaboration Requirements**: Provide mock services to Backend, validate recognition accuracy
+- **Deliverable Ownership**: All `/src/ai` directory, system prompts
+
+### 3.2 Communication Protocols
+
+**Synchronization Points**:
+- End of Phase 1: Verify all services running
+- End of Phase 2: End-to-end recognition demo
+- End of Phase 3: Quiz flow verification
+- End of Phase 4: Dashboard and library check
+- Hour 23: Final integration testing
+
+**Blocking Issue Resolution**:
+- Immediate escalation if blocked > 30 minutes
+- Alternative approaches pre-identified in tasks
+- Mock/stub fallbacks available for all dependencies
+
+### 3.3 Critical Path
+
+**Critical Path Tasks**: F1-001 → F1-002 → F1-003 → F2-001 → B2-001 → F2-003 → F3-001 → B3-001 → F3-003
+
+**Critical Path Duration**: ~14 hours  
+**Parallelization Benefit**: ~8 hours saved through parallel backend/frontend development
+
+---
+
+## SECTION 4: RISK MANAGEMENT
+
+### 4.1 Risk Register
+
+| Risk | Probability | Impact | Mitigation | Fallback |
+|------|-------------|--------|------------|----------|
+| Gemini API Rate Limits | Medium | Critical | Cache identical images, implement request queuing | Use mock responses for demo |
+| Database Connection Issues | Low | Critical | Use SQLite for local dev, verify connection early | Fall back to in-memory mock data |
+| Animation Performance | Medium | Medium | Use CSS for simple animations, lazy load Framer Motion | Disable animations, rely on color feedback |
+| Complex State Bugs | Medium | High | Keep state minimal, use Zustand devtools | Simplify to prop drilling |
+| Integration Mismatches | High | High | Define API contracts in Phase 1, use TypeScript | Runtime type checking, flexible parsing |
+
+### 4.2 Scope Flexibility Matrix
+
+**Protected (Must Have)**:
+- Image upload + AI recognition
+- Basic quiz (10 questions)
+- XP and level display
+- Sign library browsing
+
+**Flexible (Simplify if needed)**:
+- Adaptive quiz → Random selection
+- AI Chat → Static FAQ page
+- Animation polish → Basic transitions
+
+**Optional (Cut if behind)**:
+- Badges
+- Streak tracking
+- Search functionality
+- Category filtering
+
+---
+
+## SECTION 5: VERIFICATION PLAN
+
+### 5.1 Testing Strategy
+
+**Unit Testing**: Not prioritized for 24-hour sprint (time constraint)
+
+**Integration Testing**:
+- Phase 2: Upload image → verify recognition response
+- Phase 3: Start quiz → submit answers → verify XP update
+- Phase 4: Fetch stats → verify data accuracy
+
+**End-to-End Testing**:
+- Complete FTUE flow (Hour 23)
+- Complete quiz session (Hour 23)
+- Browse library and search (Hour 23)
+
+### 5.2 Demo Validation Checklist
+
+Before demo (Hour 23.5):
+- [ ] App loads in < 2 seconds
+- [ ] Upload recognizes stop sign correctly
+- [ ] Quiz completes with XP award
+- [ ] Dashboard shows updated stats
+- [ ] Sign library is browsable
+- [ ] AI chat responds helpfully
+- [ ] No console errors
+- [ ] Mobile responsive
+
+---
+
+## SECTION 6: APPENDIX
+
+### A. Quick Reference
+
+**Ports**:
+- Frontend: 3000
+- Backend: 8000
+
+**Key Commands**:
+```bash
+# Frontend
+cd signwise-frontend && npm run dev
+
+# Backend
+cd signwise-backend && npm run dev
+
+# Database
+npx prisma migrate dev
+npx prisma db seed
+npx prisma studio
+```
+
+**Environment Variables**:
+```
+# Frontend (.env.local)
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# Backend (.env)
+DATABASE_URL=file:./dev.db
+GEMINI_API_KEY=your-key-here
+MOCK_AI=false
+```
+
+### B. Demo Script
+
+1. **Open App** - Show beautiful dark mode landing
+2. **Upload Sign** - Drag stop sign image, watch AI analyze
+3. **See Result** - Show instant recognition with animation
+4. **Start Quiz** - Complete 5 questions with feedback
+5. **View Progress** - Show XP earned, level progress
+6. **Browse Library** - Search for "yield", show sign details
+7. **Chat with AI** - Ask "difference between yield and stop"
+
+---
+
+**END OF DEVELOPMENT PLAN**
