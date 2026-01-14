@@ -1,0 +1,33 @@
+TRAFFIC SIGN RECOGNITION SYSTEM: CLASSIFY TRAFFIC SIGNS FOR ROAD SAFETY AWARENESS APPS
+TRAFFIC SIGN RECOGNITION SYSTEM: CLASSIFY TRAFFIC SIGNS FOR ROAD SAFETY AWARENESS APPS
+
+ABSTRACT
+The Project is entitled “TRAFFIC SIGN RECOGNITION SYSTEM: CLASSIFY TRAFFIC SIGNS FOR ROAD SAFETY AWARENESS APPS.” Road safety education is a vital component of reducing accidents, yet many drivers and pedestrians lack adequate knowledge of traffic sign meanings. With the increasing use of digital platforms for learning and awareness, an intelligent system that can recognize and classify traffic signs offers both educational and practical value.
+This project proposes a traffic sign recognition system developed by applying computer vision techniques to classify signs from images. By training on a dataset of standardized traffic signs, the system will learn to identify and label them accurately. The platform built alognside Google Agent Development Kit can then be integrated into awareness apps for students, new drivers, or the general public, helping users familiarize themselves with road rules in an interactive manner.
+Evaluation will involve classification tests on diverse images of traffic signs under varying conditions such as lighting, angles, and partial occlusion. Metrics like recognition accuracy and processing speed will be used to determine effectiveness. The expected outcome is a reliable classification tool that promotes road safety awareness while illustrating the educational applications of computer vision.
+SYSTEM SPECIFICATION:
+HARDWARE SPECIFICATION
+Processor 		: 	Intel Core i5 or AMD Ryzen 5 (minimum 2.5 GHz)
+Mother Board : 	: 	Compatible with selected processor
+RAM 			:	8GB DDR4 (minimum)
+Hard Disk 		: 	256 GB SSD or HDD
+Mouse 		:	Standard optical mouse
+Keyboard 		:	Standard QWERTY keyboard
+
+
+SOFTWARE SPECIFICATION
+                     	Operating System 	: 	Windows 10/11, macOS 12+, or Ubuntu 20.04+
+                     	Front-End 		: 	Streamlit or Flask Web Framework
+                     	Back End 		:	Google Gemini API with Python 3.10+
+                     	Database 		:	SQLite (SQL) or MongoDB (NoSQL)
+                     	IDE 			:	Visual Studio Code or PyCharm Community Edition
+
+
+Signature of HOD 						Signature of the Guide
+
+Remarks of the Member / Monitoring Committee
+
+Recommended / Not Recommended 			 Approved / Not Approved
+
+Signature of Member / Monitoring Committee               	Signature of Head of Monitoring Committee                                                                                     (Name, Designation & 
+Address with seal)

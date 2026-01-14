@@ -1,0 +1,65 @@
+// Prisma Schema for SignWise AI
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Sign {
+  id          String   @id @default(uuid())
+  classId     Int      @unique
+  name        String
+  category    String
+  description String
+  rules       String
+  imageUrl    String
+  createdAt   DateTime @default(now())
+
+  quizQuestions QuizQuestion[]
+  recognitions  Recognition[]
+}
+
+model QuizQuestion {
+  id           String @id @default(uuid())
+  signId       String
+  sign         Sign   @relation(fields: [signId], references: [id])
+  questionText String
+  options      String // JSON array
+  correctIndex Int
+  difficulty   Int    @default(1)
+}
+
+model UserProgress {
+  id               String   @id @default(uuid())
+  visitorId        String   @unique
+  xp               Int      @default(0)
+  level            Int      @default(1)
+  quizzesCompleted Int      @default(0)
+  signsLearned     Int      @default(0)
+  currentStreak    Int      @default(0)
+  lastActiveAt     DateTime @default(now())
+  createdAt        DateTime @default(now())
+}
+
+model Recognition {
+  id         String   @id @default(uuid())
+  visitorId  String
+  signId     String?
+  sign       Sign?    @relation(fields: [signId], references: [id])
+  imageData  String?  // Base64 thumbnail or null
+  confidence Float
+  createdAt  DateTime @default(now())
+}
+
+model QuizSession {
+  id             String   @id @default(uuid())
+  visitorId      String
+  totalQuestions Int
+  correctAnswers Int
+  xpEarned       Int
+  completedAt    DateTime @default(now())
+}
