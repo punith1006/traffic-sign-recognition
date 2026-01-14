@@ -5,11 +5,29 @@ const router = Router();
 
 // Get all signs with optional filtering
 router.get('/', async (req, res) => {
-    const { category, search, limit = '50' } = req.query;
+    const { category, search, limit = '50', visitorId } = req.query;
 
     const where: any = {};
 
-    if (category && category !== 'all') {
+    // Special handling for 'discovered' category - show signs this user has recognized
+    if (category === 'discovered' && visitorId) {
+        const recognitions = await prisma.recognition.findMany({
+            where: { visitorId: visitorId as string },
+            select: { signId: true },
+            distinct: ['signId'],
+        });
+        const signIds = recognitions.map(r => r.signId).filter(Boolean) as string[];
+
+        if (signIds.length === 0) {
+            return res.json({
+                success: true,
+                signs: [],
+                total: 0,
+                categories: await getCategories(),
+            });
+        }
+        where.id = { in: signIds };
+    } else if (category && category !== 'all') {
         where.category = category as string;
     }
 
@@ -23,18 +41,21 @@ router.get('/', async (req, res) => {
         orderBy: { name: 'asc' },
     });
 
-    // Get unique categories
-    const allCategories = await prisma.sign.groupBy({
-        by: ['category'],
-    });
-
     res.json({
         success: true,
         signs,
         total: signs.length,
-        categories: ['all', ...allCategories.map(c => c.category)],
+        categories: await getCategories(),
     });
 });
+
+// Helper to get categories including 'discovered'
+async function getCategories() {
+    const allCategories = await prisma.sign.groupBy({
+        by: ['category'],
+    });
+    return ['all', 'discovered', ...allCategories.map(c => c.category)];
+}
 
 // Get single sign by ID
 router.get('/:id', async (req, res) => {

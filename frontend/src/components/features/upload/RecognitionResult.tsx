@@ -2,17 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Sparkles, Plus, RotateCcw, Shield } from 'lucide-react';
+import { CheckCircle2, Sparkles, RotateCcw, Shield, Plus } from 'lucide-react';
 import type { Sign } from '@/lib/api';
 import { getSignContext, type SignContext } from '@/lib/gemini';
+import { getVisitorId } from '@/lib/api';
 
 interface RecognitionResultProps {
     sign: Sign;
     confidence: number;
     xpEarned: number;
+    isDuplicate?: boolean;  // True if same image was uploaded before
+    isInLibrary?: boolean;  // True if this sign is already in user's library
     bbox?: { x1: number; y1: number; x2: number; y2: number };
     imageUrl: string;
     onClose: () => void;
+    onAddToLibrary?: () => void;  // Callback when user adds to library
 }
 
 const categoryColors = {
@@ -29,13 +33,21 @@ const categoryLabels = {
     construction: 'CONSTRUCTION',
 };
 
-export function RecognitionResult({ sign, confidence, xpEarned, bbox, imageUrl, onClose }: RecognitionResultProps) {
+export function RecognitionResult({ sign, confidence, xpEarned, isDuplicate, isInLibrary, bbox, imageUrl, onClose, onAddToLibrary }: RecognitionResultProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [context, setContext] = useState<SignContext | null>(null);
     const [isLoadingContext, setIsLoadingContext] = useState(true);
-    const [addedToPractice, setAddedToPractice] = useState(false);
+    const [addedToLibrary, setAddedToLibrary] = useState(isInLibrary || false);
     const confidencePercent = Math.round(confidence * 100);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Check if sign is already in user's discovered list on mount
+    useEffect(() => {
+        const discoveredSigns = JSON.parse(localStorage.getItem('signwise_discovered') || '[]');
+        if (discoveredSigns.includes(sign.id)) {
+            setAddedToLibrary(true);
+        }
+    }, [sign.id]);
 
     // Draw bounding box on image - fills container
     useEffect(() => {
@@ -120,21 +132,6 @@ export function RecognitionResult({ sign, confidence, xpEarned, bbox, imageUrl, 
         fetchContext();
     }, [sign.name, sign.category]);
 
-    const handleAddToPractice = () => {
-        // Save to localStorage practice list
-        const practiceList = JSON.parse(localStorage.getItem('signwise_practice_list') || '[]');
-        if (!practiceList.find((s: any) => s.id === sign.id)) {
-            practiceList.push({
-                id: sign.id,
-                name: sign.name,
-                category: sign.category,
-                addedAt: new Date().toISOString(),
-            });
-            localStorage.setItem('signwise_practice_list', JSON.stringify(practiceList));
-        }
-        setAddedToPractice(true);
-    };
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -183,15 +180,27 @@ export function RecognitionResult({ sign, confidence, xpEarned, bbox, imageUrl, 
                             {categoryLabels[sign.category]}
                         </span>
 
-                        <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.3, type: 'spring', stiffness: 500 }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 rounded-full"
-                        >
-                            <Sparkles className="w-3 h-3 text-primary" />
-                            <span className="font-bold text-primary text-sm">+{xpEarned} XP</span>
-                        </motion.div>
+                        {isDuplicate ? (
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.3, type: 'spring', stiffness: 500 }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-500/20 rounded-full"
+                            >
+                                <CheckCircle2 className="w-3 h-3 text-gray-400" />
+                                <span className="font-medium text-gray-400 text-xs">Already Recognized</span>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.3, type: 'spring', stiffness: 500 }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 rounded-full"
+                            >
+                                <Sparkles className="w-3 h-3 text-primary" />
+                                <span className="font-bold text-primary text-sm">+{xpEarned} XP</span>
+                            </motion.div>
+                        )}
                     </div>
 
                     {/* Sign Name */}
@@ -240,27 +249,33 @@ export function RecognitionResult({ sign, confidence, xpEarned, bbox, imageUrl, 
                         </div>
                     </div>
 
-                    {/* Add to Practice List Button */}
-                    <button
-                        onClick={handleAddToPractice}
-                        disabled={addedToPractice}
-                        className={`w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${addedToPractice
-                            ? 'bg-success/20 text-success cursor-default'
-                            : 'bg-primary hover:bg-primary/90 text-black'
-                            }`}
-                    >
-                        {addedToPractice ? (
-                            <>
-                                <CheckCircle2 className="w-5 h-5" />
-                                Added to Practice List
-                            </>
-                        ) : (
-                            <>
-                                <Plus className="w-5 h-5" />
-                                Add to Practice List
-                            </>
-                        )}
-                    </button>
+                    {/* Add to Library Button */}
+                    {addedToLibrary ? (
+                        <a
+                            href="/library?category=discovered"
+                            className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 border border-purple-500/30"
+                        >
+                            <CheckCircle2 className="w-5 h-5" />
+                            Saved in Library
+                        </a>
+                    ) : (
+                        <button
+                            onClick={() => {
+                                // Save to localStorage discovered list
+                                const discovered = JSON.parse(localStorage.getItem('signwise_discovered') || '[]');
+                                if (!discovered.includes(sign.id)) {
+                                    discovered.push(sign.id);
+                                    localStorage.setItem('signwise_discovered', JSON.stringify(discovered));
+                                }
+                                setAddedToLibrary(true);
+                                onAddToLibrary?.();
+                            }}
+                            className="w-full py-3 rounded-xl font-medium flex items-center justify-center gap-2 transition-all bg-primary hover:bg-primary/90 text-black"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Add to Library
+                        </button>
+                    )}
                 </div>
             </motion.div>
         </motion.div>

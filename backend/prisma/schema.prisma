@@ -63,3 +63,15 @@ model QuizSession {
   xpEarned       Int
   completedAt    DateTime @default(now())
 }
+
+// Image fingerprints for duplicate detection
+model ImageHash {
+  id          String   @id @default(uuid())
+  visitorId   String
+  phash       String   // 16-char hex perceptual hash
+  signClassId Int      // The sign class that was recognized
+  createdAt   DateTime @default(now())
+  
+  @@index([visitorId])
+  @@index([phash])
+}

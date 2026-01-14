@@ -79,6 +79,7 @@ export default function RecognizePage() {
                     sign={result.recognition.sign}
                     confidence={result.recognition.confidence}
                     xpEarned={result.recognition.xpEarned}
+                    isDuplicate={result.recognition.isDuplicate}
                     bbox={result.recognition.bbox}
                     imageUrl={uploadedImageUrl}
                     onClose={handleReset}

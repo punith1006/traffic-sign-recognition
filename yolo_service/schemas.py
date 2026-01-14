@@ -19,6 +19,7 @@ class PredictionResponse(BaseModel):
     predictions: List[Prediction]
     inference_time_ms: float
     image_size: List[int]
+    image_phash: Optional[str] = None  # Perceptual hash for duplicate detection
     message: Optional[str] = None
 
 class HealthResponse(BaseModel):

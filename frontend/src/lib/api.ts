@@ -16,6 +16,7 @@ export interface RecognitionResult {
         confidence: number;
         bbox?: { x1: number; y1: number; x2: number; y2: number };
         xpEarned: number;
+        isDuplicate?: boolean;  // True if this image was already recognized
     };
     progress?: {
         totalXp: number;
@@ -96,6 +97,10 @@ export async function getSigns(category?: string): Promise<{ signs: Sign[]; cate
     const params = new URLSearchParams();
     if (category && category !== 'all') {
         params.append('category', category);
+    }
+    // Pass visitorId for 'discovered' category filter
+    if (category === 'discovered') {
+        params.append('visitorId', getVisitorId());
     }
 
     const response = await fetch(`${API_BASE_URL}/signs?${params.toString()}`);

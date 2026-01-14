@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import HOST, PORT, ALLOWED_ORIGINS
 from schemas import PredictionResponse, HealthResponse
 from model import model
+from fingerprint import compute_phash
 
 # Configure logging
 logging.basicConfig(
@@ -84,6 +85,9 @@ async def predict(image: UploadFile = File(...)):
         )
     
     try:
+        # Compute perceptual hash for duplicate detection (fast, ~1-5ms)
+        image_phash = compute_phash(contents)
+        
         # Run prediction
         predictions, inference_time, image_size = model.predict(contents)
         
@@ -96,6 +100,7 @@ async def predict(image: UploadFile = File(...)):
             predictions=predictions,
             inference_time_ms=inference_time,
             image_size=image_size,
+            image_phash=image_phash,
             message=message
         )
         

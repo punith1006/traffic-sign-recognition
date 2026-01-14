@@ -86,6 +86,7 @@ async function main() {
 
     // Clear existing data
     await prisma.recognition.deleteMany();
+    await prisma.imageHash.deleteMany();
     await prisma.quizSession.deleteMany();
     await prisma.quizQuestion.deleteMany();
     await prisma.userProgress.deleteMany();

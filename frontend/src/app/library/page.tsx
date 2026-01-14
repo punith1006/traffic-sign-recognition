@@ -10,6 +10,7 @@ const categoryColors: Record<string, string> = {
     warning: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
     guide: 'bg-green-500/20 text-green-400 border-green-500/30',
     construction: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    discovered: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
     all: 'bg-primary/20 text-primary border-primary/30',
 };
 
@@ -18,6 +19,7 @@ const categoryEmojis: Record<string, string> = {
     warning: '⚠️',
     guide: '🛣️',
     construction: '🚧',
+    discovered: '🔍',
 };
 
 export default function LibraryPage() {
@@ -27,6 +29,13 @@ export default function LibraryPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [selectedSign, setSelectedSign] = useState<Sign | null>(null);
+    const [discoveredIds, setDiscoveredIds] = useState<string[]>([]);
+
+    // Load discovered sign IDs from localStorage
+    useEffect(() => {
+        const discovered = JSON.parse(localStorage.getItem('signwise_discovered') || '[]');
+        setDiscoveredIds(discovered);
+    }, []);
 
     useEffect(() => {
         loadSigns();
@@ -35,7 +44,9 @@ export default function LibraryPage() {
     const loadSigns = async () => {
         setLoading(true);
         try {
-            const data = await getSigns(activeCategory);
+            // For discovered, fetch all signs and filter client-side
+            const categoryToFetch = activeCategory === 'discovered' ? 'all' : activeCategory;
+            const data = await getSigns(categoryToFetch);
             setSigns(data.signs || []);
             if (data.categories) {
                 setCategories(data.categories);
@@ -47,9 +58,14 @@ export default function LibraryPage() {
         }
     };
 
-    const filteredSigns = signs.filter(sign =>
-        sign.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Filter signs based on search and discovered status
+    const filteredSigns = signs.filter(sign => {
+        const matchesSearch = sign.name.toLowerCase().includes(searchQuery.toLowerCase());
+        if (activeCategory === 'discovered') {
+            return matchesSearch && discoveredIds.includes(sign.id);
+        }
+        return matchesSearch;
+    });
 
     return (
         <div className="py-8 space-y-6">
@@ -84,11 +100,11 @@ export default function LibraryPage() {
                             key={category}
                             onClick={() => setActiveCategory(category)}
                             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap border ${activeCategory === category
-                                    ? categoryColors[category] || categoryColors['all']
-                                    : 'bg-surface border-white/10 text-gray-400 hover:text-white'
+                                ? categoryColors[category] || categoryColors['all']
+                                : 'bg-surface border-white/10 text-gray-400 hover:text-white'
                                 }`}
                         >
-                            {category === 'all' ? 'All Signs' : category.charAt(0).toUpperCase() + category.slice(1)}
+                            {category === 'all' ? 'All Signs' : category === 'discovered' ? '🔍 Discovered' : category.charAt(0).toUpperCase() + category.slice(1)}
                         </button>
                     ))}
                 </div>

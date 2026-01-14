@@ -10,6 +10,9 @@ const router = Router();
 const YOLO_SERVICE_URL = process.env.YOLO_SERVICE_URL || 'http://localhost:8000';
 console.log(`📡 YOLO Service URL: ${YOLO_SERVICE_URL}`);
 
+// Hamming distance threshold - matches fingerprint.py
+const DUPLICATE_THRESHOLD = 5;
+
 interface YoloPrediction {
     class_id: number;
     class_name: string;
@@ -27,7 +30,57 @@ interface YoloResponse {
     success: boolean;
     predictions: YoloPrediction[];
     inference_time_ms: number;
+    image_phash?: string;  // Perceptual hash for duplicate detection
     message?: string;
+}
+
+/**
+ * Compute Hamming distance between two hex hash strings.
+ * Each hex char represents 4 bits, so we compare bit by bit.
+ */
+function hammingDistance(hash1: string, hash2: string): number {
+    if (!hash1 || !hash2 || hash1.length !== hash2.length) {
+        return 64; // Max distance for 64-bit hash
+    }
+
+    let distance = 0;
+    for (let i = 0; i < hash1.length; i++) {
+        const n1 = parseInt(hash1[i], 16);
+        const n2 = parseInt(hash2[i], 16);
+        // Count differing bits using XOR and popcount
+        let xor = n1 ^ n2;
+        while (xor) {
+            distance += xor & 1;
+            xor >>= 1;
+        }
+    }
+    return distance;
+}
+
+/**
+ * Check if a pHash is a duplicate of any existing hashes for this user.
+ */
+async function checkDuplicate(visitorId: string, newHash: string): Promise<{ isDuplicate: boolean; matchingHash?: string }> {
+    if (!newHash) {
+        return { isDuplicate: false };
+    }
+
+    // Get all existing hashes for this user
+    const existingHashes = await prisma.imageHash.findMany({
+        where: { visitorId },
+        select: { phash: true }
+    });
+
+    // Check each hash for similarity
+    for (const { phash } of existingHashes) {
+        const distance = hammingDistance(newHash, phash);
+        if (distance <= DUPLICATE_THRESHOLD) {
+            console.log(`🔄 Duplicate detected! Hash: ${newHash}, Distance: ${distance}`);
+            return { isDuplicate: true, matchingHash: phash };
+        }
+    }
+
+    return { isDuplicate: false };
 }
 
 router.post('/', upload.single('image'), async (req, res) => {
@@ -75,6 +128,10 @@ router.post('/', upload.single('image'), async (req, res) => {
 
         // Get the top prediction
         const topPrediction = yoloResult.predictions[0];
+        const imagePhash = yoloResult.image_phash;
+
+        // Check for duplicate image BEFORE awarding XP
+        const { isDuplicate } = await checkDuplicate(visitorId, imagePhash || '');
 
         // Try to find matching sign in database
         let sign = await prisma.sign.findFirst({
@@ -101,10 +158,10 @@ router.post('/', upload.single('image'), async (req, res) => {
             console.log(`📝 Created new sign: ${sign.name} (classId: ${sign.classId})`);
         }
 
-        // Calculate XP earned (10 base + bonus for high confidence)
-        const xpEarned = topPrediction.confidence > 0.8 ? 15 : 10;
+        // Calculate XP earned (only if NOT a duplicate)
+        const xpEarned = isDuplicate ? 0 : (topPrediction.confidence > 0.8 ? 15 : 10);
 
-        // Update or create user progress
+        // Update or create user progress (only increment if NOT duplicate)
         let userProgress = await prisma.userProgress.findUnique({
             where: { visitorId },
         });
@@ -114,11 +171,12 @@ router.post('/', upload.single('image'), async (req, res) => {
                 data: {
                     visitorId,
                     xp: xpEarned,
-                    signsLearned: 1,
+                    signsLearned: isDuplicate ? 0 : 1,
                     lastActiveAt: new Date(),
                 },
             });
-        } else {
+        } else if (!isDuplicate) {
+            // Only update XP and signs if not a duplicate
             userProgress = await prisma.userProgress.update({
                 where: { visitorId },
                 data: {
@@ -129,7 +187,7 @@ router.post('/', upload.single('image'), async (req, res) => {
             });
         }
 
-        // Save recognition record
+        // Save recognition record (always, for history)
         await prisma.recognition.create({
             data: {
                 visitorId,
@@ -137,6 +195,18 @@ router.post('/', upload.single('image'), async (req, res) => {
                 confidence: topPrediction.confidence,
             },
         });
+
+        // Store image hash for future duplicate detection (only if new)
+        if (!isDuplicate && imagePhash) {
+            await prisma.imageHash.create({
+                data: {
+                    visitorId,
+                    phash: imagePhash,
+                    signClassId: topPrediction.class_id,
+                },
+            });
+            console.log(`🆕 Stored new image hash: ${imagePhash}`);
+        }
 
         // Calculate new level (100 XP per level)
         const newLevel = Math.floor(userProgress.xp / 100) + 1;
@@ -161,6 +231,7 @@ router.post('/', upload.single('image'), async (req, res) => {
                 confidence: topPrediction.confidence,
                 bbox: topPrediction.bbox,
                 xpEarned,
+                isDuplicate,  // Flag for frontend to show appropriate message
             },
             progress: {
                 totalXp: userProgress.xp,
