@@ -82,6 +82,20 @@ function generateQuestions(sign: typeof signs[0]) {
         difficulty: 2,
     });
 
+    // Question type 3: Extreme/Scenario (Hard)
+    questions.push({
+        signId: '',
+        questionText: `EXTREME CHALLENGE: In which specific scenario is this '${sign.name}' sign most critical?`,
+        options: JSON.stringify([
+            sign.category === 'regulatory' ? 'When law enforcement is present' : 'During poor visibility conditions',
+            'Only during the daytime',
+            sign.rules, // Correct answer (the full rule provides the critical context)
+            'It is just a suggestion, not critical'
+        ]),
+        correctIndex: 2, // The full rule is the correct answer here
+        difficulty: 3,
+    });
+
     return questions;
 }
 

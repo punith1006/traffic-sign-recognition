@@ -62,6 +62,82 @@ router.get('/generate', async (req, res) => {
     });
 });
 
+// Generate daily challenge (2 Easy, 2 Mid, 1 Hard)
+router.get('/daily', async (req, res) => {
+    try {
+        // Fetch 2 Random Easy (Difficulty 1)
+        const easyQuestions = await prisma.quizQuestion.findMany({
+            where: { difficulty: 1 },
+            select: { id: true }
+        });
+        const selectedEasy = easyQuestions.sort(() => Math.random() - 0.5).slice(0, 2);
+
+        // Fetch 2 Random Medium (Difficulty 2)
+        const mediumQuestions = await prisma.quizQuestion.findMany({
+            where: { difficulty: 2 },
+            select: { id: true }
+        });
+        const selectedMedium = mediumQuestions.sort(() => Math.random() - 0.5).slice(0, 2);
+
+        // Fetch 1 Random Hard (Difficulty 3)
+        const hardQuestions = await prisma.quizQuestion.findMany({
+            where: { difficulty: 3 },
+            select: { id: true }
+        });
+        const selectedHard = hardQuestions.sort(() => Math.random() - 0.5).slice(0, 1);
+
+        // Combine IDs
+        const allSelectedIds = [
+            ...selectedEasy.map(q => q.id),
+            ...selectedMedium.map(q => q.id),
+            ...selectedHard.map(q => q.id)
+        ];
+
+        // Fetch full details
+        const questions = await prisma.quizQuestion.findMany({
+            where: { id: { in: allSelectedIds } },
+            include: { sign: true },
+        });
+
+        const sessionId = uuidv4();
+
+        // Process questions (Shuffle options & set correctIndex)
+        const processedQuestions = questions.map(q => {
+            const originalOptions = JSON.parse(q.options) as string[];
+
+            // Create options with original index tracking
+            const optionsWithIndex = originalOptions.map((opt, idx) => ({
+                text: opt,
+                isCorrect: idx === q.correctIndex
+            }));
+
+            // Shuffle options
+            const shuffledOptions = optionsWithIndex.sort(() => Math.random() - 0.5);
+            const newCorrectIndex = shuffledOptions.findIndex(opt => opt.isCorrect);
+
+            return {
+                id: q.id,
+                signImageUrl: q.sign.imageUrl,
+                questionText: q.questionText,
+                options: shuffledOptions.map(o => o.text),
+                correctIndex: newCorrectIndex,
+                difficulty: q.difficulty,
+            };
+        });
+
+        res.json({
+            success: true,
+            sessionId,
+            questions: processedQuestions,
+            isDaily: true
+        });
+
+    } catch (error) {
+        console.error('Daily challenge error:', error);
+        res.status(500).json({ success: false, message: 'Failed to generate daily challenge' });
+    }
+});
+
 // Submit quiz answers
 router.post('/submit', async (req, res) => {
     const { sessionId, answers, visitorId = uuidv4() } = req.body;

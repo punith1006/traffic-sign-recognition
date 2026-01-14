@@ -140,6 +140,12 @@ export async function submitQuiz(
     return response.json();
 }
 
+// Generate daily quiz
+export async function generateDailyQuiz(): Promise<{ sessionId: string; questions: QuizQuestion[] }> {
+    const response = await fetch(`${API_BASE_URL}/quiz/daily`);
+    return response.json();
+}
+
 // Get user progress
 export async function getProgress(): Promise<{ progress: UserProgress; recentActivity: any[] }> {
     const response = await fetch(`${API_BASE_URL}/progress?visitorId=${getVisitorId()}`);

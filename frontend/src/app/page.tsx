@@ -7,14 +7,18 @@ import {
     ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
+import { startOfDay } from 'date-fns';
 import { getProgress, type UserProgress } from '@/lib/api';
 import { BadgeGrid } from '@/components/features/badges/BadgeGrid';
 
 export default function HomePage() {
     const [progress, setProgress] = useState<UserProgress | null>(null);
     const [loading, setLoading] = useState(true);
+    const [dailyCompleted, setDailyCompleted] = useState(false);
+    const [dailyScore, setDailyScore] = useState<number | null>(null);
 
     useEffect(() => {
+        // Load progress
         async function loadProgress() {
             try {
                 const data = await getProgress();
@@ -26,6 +30,18 @@ export default function HomePage() {
             }
         }
         loadProgress();
+
+        // Check daily challenge status
+        const lastDaily = localStorage.getItem('last_daily_completed');
+        const lastScore = localStorage.getItem('last_daily_score');
+
+        if (lastDaily) {
+            const today = startOfDay(new Date()).toISOString();
+            if (lastDaily === today) {
+                setDailyCompleted(true);
+                if (lastScore) setDailyScore(parseInt(lastScore));
+            }
+        }
     }, []);
 
     const xpProgressPercent = progress
@@ -227,17 +243,35 @@ export default function HomePage() {
                         </div>
                         <div className="flex-1">
                             <h2 className="text-lg font-semibold text-white mb-1">Daily Challenge</h2>
-                            <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
-                                Complete 5 questions to earn XP!
-                            </p>
-                            <Link
-                                href="/quiz"
-                                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all hover:scale-[1.02]"
-                                style={{ background: '#00D9FF', color: '#0A1128' }}
-                            >
-                                Start Challenge
-                                <ArrowRight className="w-4 h-4" />
-                            </Link>
+                            {!dailyCompleted ? (
+                                <>
+                                    <p className="text-sm mb-4" style={{ color: '#94A3B8' }}>
+                                        Complete 5 questions to earn XP!
+                                    </p>
+                                    <Link
+                                        href="/quiz"
+                                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all hover:scale-[1.02]"
+                                        style={{ background: '#00D9FF', color: '#0A1128' }}
+                                    >
+                                        Start Challenge
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-2xl font-bold text-white">
+                                            {dailyScore !== null ? `${dailyScore}%` : 'Done'}
+                                        </span>
+                                        <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full border border-green-500/30 font-medium">
+                                            COMPLETED
+                                        </span>
+                                    </div>
+                                    <p className="text-sm" style={{ color: '#94A3B8' }}>
+                                        Great job! Come back tomorrow for a new challenge.
+                                    </p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </motion.div>
