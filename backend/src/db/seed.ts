@@ -1,17 +1,21 @@
 import prisma from './index';
 
-// Traffic sign data with YOLO class mappings
+// Traffic sign data with YOLO class mappings and local SVG paths
 const signs = [
-    // Regulatory Signs
+    // Regulatory Signs - Speed Limits
     { classId: 0, name: 'Speed Limit 20', category: 'regulatory', description: 'Maximum speed of 20 km/h allowed in this zone.', rules: 'Do not exceed 20 km/h. Common in school zones and residential areas.', imageUrl: '/signs/speed-20.svg' },
     { classId: 1, name: 'Speed Limit 30', category: 'regulatory', description: 'Maximum speed of 30 km/h allowed in this zone.', rules: 'Reduce speed to 30 km/h. Often found in urban residential areas.', imageUrl: '/signs/speed-30.svg' },
     { classId: 2, name: 'Speed Limit 50', category: 'regulatory', description: 'Maximum speed of 50 km/h allowed.', rules: 'Standard urban speed limit in many countries.', imageUrl: '/signs/speed-50.svg' },
     { classId: 3, name: 'Speed Limit 60', category: 'regulatory', description: 'Maximum speed of 60 km/h allowed.', rules: 'Common on urban highways and main roads.', imageUrl: '/signs/speed-60.svg' },
     { classId: 4, name: 'Speed Limit 70', category: 'regulatory', description: 'Maximum speed of 70 km/h allowed.', rules: 'Found on secondary roads outside urban areas.', imageUrl: '/signs/speed-70.svg' },
     { classId: 5, name: 'Speed Limit 80', category: 'regulatory', description: 'Maximum speed of 80 km/h allowed.', rules: 'Common on rural roads and expressways.', imageUrl: '/signs/speed-80.svg' },
+
+    // Regulatory Signs - Stop, No Entry, etc.
     { classId: 14, name: 'Stop', category: 'regulatory', description: 'Come to a complete stop at the marked line or intersection.', rules: 'Full stop required. Check for traffic from all directions before proceeding.', imageUrl: '/signs/stop.svg' },
     { classId: 15, name: 'No Vehicles', category: 'regulatory', description: 'No vehicles allowed beyond this point.', rules: 'Entry prohibited for all motor vehicles.', imageUrl: '/signs/no-vehicles.svg' },
     { classId: 17, name: 'No Entry', category: 'regulatory', description: 'Entry prohibited into this road or lane.', rules: 'Do not enter. Usually indicates one-way street from wrong direction.', imageUrl: '/signs/no-entry.svg' },
+
+    // Regulatory Signs - Mandatory Direction
     { classId: 33, name: 'Turn Right Ahead', category: 'regulatory', description: 'Mandatory right turn ahead.', rules: 'You must turn right at the next intersection.', imageUrl: '/signs/turn-right.svg' },
     { classId: 34, name: 'Turn Left Ahead', category: 'regulatory', description: 'Mandatory left turn ahead.', rules: 'You must turn left at the next intersection.', imageUrl: '/signs/turn-left.svg' },
     { classId: 35, name: 'Ahead Only', category: 'regulatory', description: 'Proceed straight ahead only.', rules: 'No turning allowed. Continue straight only.', imageUrl: '/signs/ahead-only.svg' },
@@ -92,7 +96,7 @@ async function main() {
     await prisma.userProgress.deleteMany();
     await prisma.sign.deleteMany();
 
-    console.log('📝 Creating signs...');
+    console.log('📝 Creating signs with local SVG images...');
 
     for (const signData of signs) {
         const sign = await prisma.sign.create({
@@ -114,7 +118,7 @@ async function main() {
     const signCount = await prisma.sign.count();
     const questionCount = await prisma.quizQuestion.count();
 
-    console.log(`✅ Created ${signCount} signs`);
+    console.log(`✅ Created ${signCount} signs with local SVG images`);
     console.log(`✅ Created ${questionCount} quiz questions`);
     console.log('🎉 Database seeded successfully!');
 }

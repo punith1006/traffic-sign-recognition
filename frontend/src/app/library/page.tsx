@@ -130,9 +130,21 @@ export default function LibraryPage() {
                             onClick={() => setSelectedSign(sign)}
                             className="card card-hover cursor-pointer"
                         >
-                            {/* Sign Icon */}
-                            <div className="w-16 h-16 mx-auto mb-3 bg-surface-elevated rounded-xl flex items-center justify-center text-3xl">
-                                {categoryEmojis[sign.category] || '🪧'}
+                            {/* Sign Image */}
+                            <div className="w-20 h-20 mx-auto mb-3 bg-surface-elevated rounded-xl flex items-center justify-center overflow-hidden">
+                                {sign.imageUrl && sign.imageUrl.startsWith('http') ? (
+                                    <img
+                                        src={sign.imageUrl}
+                                        alt={sign.name}
+                                        className="w-16 h-16 object-contain"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                        }}
+                                    />
+                                ) : (
+                                    <span className="text-3xl">{categoryEmojis[sign.category] || '🪧'}</span>
+                                )}
                             </div>
 
                             {/* Sign Name */}
@@ -164,8 +176,16 @@ export default function LibraryPage() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-start gap-4 mb-4">
-                            <div className="w-20 h-20 bg-surface-elevated rounded-xl flex items-center justify-center text-4xl flex-shrink-0">
-                                {categoryEmojis[selectedSign.category] || '🪧'}
+                            <div className="w-24 h-24 bg-surface-elevated rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                {selectedSign.imageUrl && selectedSign.imageUrl.startsWith('http') ? (
+                                    <img
+                                        src={selectedSign.imageUrl}
+                                        alt={selectedSign.name}
+                                        className="w-20 h-20 object-contain"
+                                    />
+                                ) : (
+                                    <span className="text-4xl">{categoryEmojis[selectedSign.category] || '🪧'}</span>
+                                )}
                             </div>
                             <div>
                                 <h2 className="text-xl font-heading font-bold text-white mb-1">

@@ -9,28 +9,56 @@ router.get('/generate', async (req, res) => {
     const { count = '10' } = req.query;
     const questionCount = Math.min(parseInt(count as string), 20);
 
-    // Get random quiz questions
-    const questions = await prisma.quizQuestion.findMany({
-        include: { sign: true },
-        take: questionCount,
+    // 1. Get all question IDs first for true randomization
+    const allQuestions = await prisma.quizQuestion.findMany({
+        select: { id: true }
     });
 
-    // Shuffle questions
-    const shuffled = questions.sort(() => Math.random() - 0.5);
+    // 2. Shuffle IDs and pick N
+    const shuffledIds = allQuestions.sort(() => Math.random() - 0.5).slice(0, questionCount);
+    const selectedIds = shuffledIds.map(q => q.id);
+
+    // 3. Fetch full details for selected questions
+    const questions = await prisma.quizQuestion.findMany({
+        where: { id: { in: selectedIds } },
+        include: { sign: true },
+    });
 
     const sessionId = uuidv4();
+
+    // 4. Process questions: Shuffle options and track new correct index
+    const processedQuestions = questions.map(q => {
+        const originalOptions = JSON.parse(q.options) as string[];
+        const originalCorrectAnswer = originalOptions[q.correctIndex];
+
+        // Create options with original index to track correctness
+        const optionsWithIndex = originalOptions.map((opt, idx) => ({
+            text: opt,
+            originalIndex: idx,
+            isCorrect: idx === q.correctIndex
+        }));
+
+        // Shuffle options
+        const shuffledOptions = optionsWithIndex.sort(() => Math.random() - 0.5);
+
+        // Find new correct index
+        const newCorrectIndex = shuffledOptions.findIndex(opt => opt.isCorrect);
+
+        return {
+            id: q.id,
+            signImageUrl: q.sign.imageUrl,
+            questionText: q.questionText,
+            options: shuffledOptions.map(o => o.text),
+            correctIndex: newCorrectIndex, // Send this to frontend for immediate feedback
+            difficulty: q.difficulty,
+        };
+    });
 
     res.json({
         success: true,
         sessionId,
-        questions: shuffled.map(q => ({
-            id: q.id,
-            signImageUrl: q.sign.imageUrl,
-            questionText: q.questionText,
-            options: JSON.parse(q.options),
-            difficulty: q.difficulty,
-        })),
-        totalQuestions: shuffled.length,
+        questions: processedQuestions,
+        totalQuestions: processedQuestions.length,
     });
 });
 

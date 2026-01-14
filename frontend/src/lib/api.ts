@@ -31,6 +31,7 @@ export interface QuizQuestion {
     signImageUrl: string;
     questionText: string;
     options: string[];
+    correctIndex: number;
     difficulty: number;
 }
 

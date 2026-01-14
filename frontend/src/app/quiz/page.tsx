@@ -140,8 +140,16 @@ export default function QuizPage() {
                             className="card mb-6"
                         >
                             {/* Sign Image */}
-                            <div className="w-32 h-32 mx-auto mb-6 bg-surface-elevated rounded-xl flex items-center justify-center text-6xl">
-                                🚸
+                            <div className="w-48 h-48 mx-auto mb-6 bg-surface-elevated rounded-xl flex items-center justify-center overflow-hidden">
+                                {currentQuestion.signImageUrl && currentQuestion.signImageUrl.startsWith('/') ? (
+                                    <img
+                                        src={currentQuestion.signImageUrl}
+                                        alt="Traffic Sign"
+                                        className="w-40 h-40 object-contain"
+                                    />
+                                ) : (
+                                    <span className="text-6xl">🚸</span>
+                                )}
                             </div>
 
                             {/* Question */}
@@ -155,8 +163,8 @@ export default function QuizPage() {
                                     let buttonClass = 'w-full p-4 rounded-xl border text-left transition-all ';
 
                                     if (showFeedback) {
-                                        if (index === 0) {
-                                            // First option is always correct (as per our seed)
+                                        if (index === currentQuestion.correctIndex) {
+                                            // Show correct answer
                                             buttonClass += 'border-success bg-success/10 text-success';
                                         } else if (index === selectedAnswer) {
                                             buttonClass += 'border-error bg-error/10 text-error';
@@ -179,10 +187,10 @@ export default function QuizPage() {
                                                     {String.fromCharCode(65 + index)}
                                                 </span>
                                                 <span>{option}</span>
-                                                {showFeedback && index === 0 && (
+                                                {showFeedback && index === currentQuestion.correctIndex && (
                                                     <CheckCircle className="w-5 h-5 ml-auto text-success" />
                                                 )}
-                                                {showFeedback && index === selectedAnswer && index !== 0 && (
+                                                {showFeedback && index === selectedAnswer && index !== currentQuestion.correctIndex && (
                                                     <XCircle className="w-5 h-5 ml-auto text-error" />
                                                 )}
                                             </div>
