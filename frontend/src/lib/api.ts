@@ -48,6 +48,19 @@ export interface UserProgress {
     quizzesCompleted: number;
     signsLearned: number;
     currentStreak: number;
+    accuracy?: number;
+    earnedBadges?: string[];
+    badges?: Array<{
+        id: string;
+        earned: boolean;
+        earnedAt?: string;
+    }>;
+    categoryProgress?: {
+        regulatory: { learned: number; total: number };
+        warning: { learned: number; total: number };
+        guide: { learned: number; total: number };
+        construction: { learned: number; total: number };
+    };
 }
 
 // Get or create visitor ID

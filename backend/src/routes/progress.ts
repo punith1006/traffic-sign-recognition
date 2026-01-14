@@ -67,6 +67,159 @@ router.get('/', async (req, res) => {
     const xpForNextLevel = (userProgress.level) * 100;
     const xpProgress = userProgress.xp % 100;
 
+    // Calculate category progress - count unique signs learned per category
+    const categoryProgress = await prisma.$queryRaw<{ category: string; learned: number }[]>`
+        SELECT s.category, COUNT(DISTINCT s.id) as learned
+        FROM "Recognition" r
+        JOIN "Sign" s ON r."signId" = s.id
+        WHERE r."visitorId" = ${visitorId}
+        GROUP BY s.category
+    `;
+
+    // Get total signs per category
+    const categoryTotals = await prisma.sign.groupBy({
+        by: ['category'],
+        _count: true,
+    });
+
+    // Build category progress map
+    const categoryMap: Record<string, { learned: number; total: number }> = {
+        regulatory: { learned: 0, total: 0 },
+        warning: { learned: 0, total: 0 },
+        guide: { learned: 0, total: 0 },
+        construction: { learned: 0, total: 0 },
+    };
+
+    // Fill in totals
+    categoryTotals.forEach(cat => {
+        if (categoryMap[cat.category]) {
+            categoryMap[cat.category].total = cat._count;
+        }
+    });
+
+    // Fill in learned counts
+    categoryProgress.forEach(cat => {
+        if (categoryMap[cat.category]) {
+            categoryMap[cat.category].learned = Number(cat.learned);
+        }
+    });
+
+    // Calculate accuracy from quiz sessions
+    const quizStats = await prisma.quizSession.aggregate({
+        where: { visitorId },
+        _sum: {
+            correctAnswers: true,
+            totalQuestions: true,
+        },
+    });
+    const totalCorrect = quizStats._sum.correctAnswers || 0;
+    const totalQuestions = quizStats._sum.totalQuestions || 0;
+    const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+    // Check if user got 100% on any quiz
+    const perfectQuiz = await prisma.quizSession.findFirst({
+        where: {
+            visitorId,
+            correctAnswers: { equals: prisma.quizSession.fields.totalQuestions }
+        },
+    }).catch(() => null);
+    const hasPerfectQuiz = await prisma.quizSession.findFirst({
+        where: { visitorId },
+    }).then(async () => {
+        const perfect = await prisma.$queryRaw<{ count: number }[]>`
+            SELECT COUNT(*) as count FROM "QuizSession" 
+            WHERE "visitorId" = ${visitorId} AND "correctAnswers" = "totalQuestions"
+        `;
+        return (perfect[0]?.count || 0) > 0;
+    }).catch(() => false);
+
+    // Check if user tried all categories
+    const categoriesTried = Object.values(categoryMap).filter(c => c.learned > 0).length;
+    const allCategoriesTried = categoriesTried === 4;
+
+    // Check for 5 recognitions in one day
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const recognitionsToday = await prisma.recognition.count({
+        where: {
+            visitorId,
+            createdAt: { gte: today },
+        },
+    });
+    const hasSpeedyDay = recognitionsToday >= 5;
+
+    // Get first recognition date for badge earned dates
+    const firstRecognition = await prisma.recognition.findFirst({
+        where: { visitorId },
+        orderBy: { createdAt: 'asc' },
+    });
+
+    // Get first quiz date
+    const firstQuiz = await prisma.quizSession.findFirst({
+        where: { visitorId },
+        orderBy: { completedAt: 'asc' },
+    });
+
+    // Get perfect quiz date
+    const perfectQuizRecord = await prisma.$queryRaw<{ completedAt: Date }[]>`
+        SELECT "completedAt" FROM "QuizSession" 
+        WHERE "visitorId" = ${visitorId} AND "correctAnswers" = "totalQuestions"
+        ORDER BY "completedAt" ASC LIMIT 1
+    `.catch(() => []);
+
+    // Badge definitions with earned status and dates
+    interface BadgeInfo {
+        id: string;
+        earned: boolean;
+        earnedAt?: string;
+    }
+
+    const badges: BadgeInfo[] = [
+        {
+            id: 'road_rookie',
+            earned: userProgress.signsLearned >= 1,
+            earnedAt: firstRecognition?.createdAt?.toISOString(),
+        },
+        {
+            id: 'sharp_eyes',
+            earned: userProgress.signsLearned >= 10,
+            earnedAt: userProgress.signsLearned >= 10 ? userProgress.lastActiveAt?.toISOString() : undefined,
+        },
+        {
+            id: 'sign_scholar',
+            earned: userProgress.quizzesCompleted >= 1,
+            earnedAt: firstQuiz?.completedAt?.toISOString(),
+        },
+        {
+            id: 'quiz_champion',
+            earned: hasPerfectQuiz,
+            earnedAt: perfectQuizRecord[0]?.completedAt?.toISOString(),
+        },
+        {
+            id: 'week_warrior',
+            earned: userProgress.currentStreak >= 7,
+            earnedAt: userProgress.currentStreak >= 7 ? userProgress.lastActiveAt?.toISOString() : undefined,
+        },
+        {
+            id: 'category_conqueror',
+            earned: allCategoriesTried,
+            earnedAt: allCategoriesTried ? userProgress.lastActiveAt?.toISOString() : undefined,
+        },
+        {
+            id: 'speed_demon',
+            earned: hasSpeedyDay,
+            earnedAt: hasSpeedyDay ? new Date().toISOString() : undefined,
+        },
+        {
+            id: 'road_master',
+            earned: userProgress.level >= 10,
+            earnedAt: userProgress.level >= 10 ? userProgress.lastActiveAt?.toISOString() : undefined,
+        },
+    ];
+
+    // Filter to earned badges for backward compatibility
+    const earnedBadges = badges.filter(b => b.earned).map(b => b.id);
+
     res.json({
         success: true,
         progress: {
@@ -77,6 +230,10 @@ router.get('/', async (req, res) => {
             quizzesCompleted: userProgress.quizzesCompleted,
             signsLearned: userProgress.signsLearned,
             currentStreak: userProgress.currentStreak,
+            categoryProgress: categoryMap,
+            accuracy,
+            earnedBadges,
+            badges, // Full badge info with earned dates
         },
         recentActivity,
     });

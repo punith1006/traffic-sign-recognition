@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Library, HelpCircle, Trophy } from 'lucide-react';
+import { Home, Library, HelpCircle, Trophy, Camera } from 'lucide-react';
 
 const navItems = [
     { href: '/', label: 'Home', icon: Home },
+    { href: '/recognize', label: 'Recognize', icon: Camera },
     { href: '/library', label: 'Library', icon: Library },
     { href: '/quiz', label: 'Quiz', icon: HelpCircle },
 ];
@@ -38,8 +39,8 @@ export function Navigation() {
                                         key={item.href}
                                         href={item.href}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${isActive
-                                                ? 'bg-primary/10 text-primary'
-                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
                                             }`}
                                     >
                                         <item.icon className="w-5 h-5" />
